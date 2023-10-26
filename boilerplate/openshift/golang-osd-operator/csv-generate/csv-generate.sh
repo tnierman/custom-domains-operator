@@ -133,7 +133,8 @@ if [[ -z "$SKIP_SAAS_FILE_CHECKS" ]]; then
             exit 1
         fi
 
-        delete=false
+        #delete=false
+        delete=true
         # Sort based on commit number
         for version in $(ls $BUNDLE_DIR | sort -t . -k 3 -g); do
             # skip if not directory
@@ -146,6 +147,13 @@ if [[ -z "$SKIP_SAAS_FILE_CHECKS" ]]; then
                     delete=true
                 fi
             else
+		revert=$(git log --pretty=oneline | tail -n +2 | awk '{print $1}' | grep -q "${operator_commit_hash}")
+		if [[ "${revert}" -ne 0 ]];
+		then
+			echo "Detected previous commit with identical hash - likely revert"
+			echo "Reverting OLM operators is not supported. Exiting"
+			exit 1
+		fi
                 rm -rf "${BUNDLE_DIR:?BUNDLE_DIR var not set}/$version"
             fi
         done
